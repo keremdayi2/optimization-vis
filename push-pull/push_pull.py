@@ -93,17 +93,20 @@ def simulate_push_pull(R, C, objective, x_init = None, constraints = None, eta =
     gradient_errors = []
     optimality_errors = []
     xs = []
+    ys = []
     
     for iteration in range(num_iterations):
         # update x (disable gradients to not break things)
         consensus_errors.append(consensus_error(x, phi))
         gradient_errors.append(grad_error(y, pi))
         optimality_errors.append(optimality_error(x, x_star, phi))
+        ys.append(y.detach().clone())
         xs.append(x.detach().clone())
 
         with torch.no_grad():
             x = R @ x - eta * y
-            x = constraints.project(x)
+            if constraints != None:
+                x = constraints.project(x)
 
         # update the new gradient
         x.requires_grad = True
@@ -117,8 +120,9 @@ def simulate_push_pull(R, C, objective, x_init = None, constraints = None, eta =
         prev_grad = new_grad
     
     data = {}
-    data['consensus_error'] = consensus_errors
-    data['grad_error'] = gradient_errors
-    data['optimality_gap'] = optimality_errors
+    data['consensus_error'] = torch.Tensor(consensus_errors)
+    data['grad_error'] = torch.Tensor(gradient_errors)
+    data['optimality_gap'] = torch.Tensor(optimality_errors)
     data['xs'] = xs
+    data['ys'] = ys
     return data

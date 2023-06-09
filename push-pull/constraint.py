@@ -34,3 +34,29 @@ class RectangleConstraint():
         with torch.no_grad():
             constraint_sat = torch.cat([x >= self.lowers, x <= self.uppers], dim=-1)
             return torch.all(constraint_sat, dim=1)
+
+class SphericalConstraint():
+    def __init__(self, center, radius):
+        self.center = center
+        self.radius = radius
+    
+    def project(self, x):
+        with torch.no_grad():
+            unsqueezed = len(x.shape) == 1
+            if unsqueezed:
+                x = torch.unsqueeze(x, 0)
+            diff = x - self.center
+            norms = torch.norm(diff, dim=1)
+            for i in range(diff.shape[0]):
+                if norms[i] > self.radius:
+                    diff[i] /= norms[i] # normalize the radius to 1
+                    diff[i] *= self.radius
+            
+            if unsqueezed:
+                return (self.center + diff)[0, :]
+            return self.center + diff
+    
+    def feasible(self, x):
+        with torch.no_grad():
+            diff = x - self.center
+            return torch.norm(diff, dim = 1) <= self.radius
