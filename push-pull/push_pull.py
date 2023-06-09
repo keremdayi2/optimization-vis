@@ -4,14 +4,15 @@ from objective import *
 from constraint import *
 
 
-###
-### HELPER METHODS 
-### 
+'''
+	Maybe move the helpers into a helper class?
+'''
 
 # compute the gradient error
 #
 # S(y, pi) = \sqrt{\sum_{i=1}^n \pi_i \|\frac{y_i}{\pi_i}-\sum_{l=1}^n y_l\|^2}
 # 
+
 def grad_error(y, pi):
 	with torch.no_grad():
 	    total_y = y.sum(dim=0)
@@ -21,7 +22,6 @@ def grad_error(y, pi):
 	    return torch.sqrt(torch.dot(errors, pi))
 
 # compute the consensus error
-
 def consensus_error(x, phi):
 	with torch.no_grad():
 	    x_hat = (x * phi[:, None]).sum(dim=0)
@@ -64,6 +64,14 @@ def find_eigenvectors(R, C):
 	pi = pi/pi.sum()
 
 	return (phi, pi)
+
+'''
+ 	Maybe change this into a push_pull_step() function so that
+ 	it is easier to customize. For instance, if R, C changes over time.
+
+ 	Could also easily implement robust push pull
+'''
+
 
 def simulate_push_pull(R, C, objective, x_init = None, constraints = None, eta = 0.01, num_iterations = 20):
     phi, pi = find_eigenvectors(R, C)

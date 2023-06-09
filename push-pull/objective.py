@@ -1,5 +1,20 @@
 import torch
 
+
+'''
+    Check the vectorization operations in calling objectives. Should be able to
+    easily generate contour maps
+'''
+
+class Objective:
+    def __init__(self):
+        pass
+
+    #
+    def global_objective(self, x):
+        self.__call__(x)
+
+
 # Quadratic objective (x-x_0)^T P (x-x_0)
 # if passing multiple vectors, make sure the rows are the decision variables
 # ie, x[i] is agent i's decision variable and has the same dimension as x_0
@@ -7,6 +22,7 @@ class QuadraticObjective:
     def __init__(self, P, x_0):
         self.P = P
         self.x_0 = x_0
+        self.dims = x_0.shape[0]
     
     # note!!! can modify torch computation graphs
     def __call__(self, x):
@@ -21,7 +37,11 @@ class QuadraticObjective:
 # allows different objectives for different agents
 class MultiAgentObjective:
     def __init__(self, objectives):
+        assert(len(objectives) > 0, 'please give a non-empty set of objectives')
         self.objectives = objectives
+        self.dims = objectives[0].dims
+        for o in objectives:
+            assert(o.dims == self.dims, 'please make sure all agents have the same decision variable dimension')
     
     # note!!! can modify torch computation graphs
     def __call__(self, x):

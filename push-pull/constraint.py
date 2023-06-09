@@ -1,5 +1,10 @@
 import torch
 
+'''
+    TODO: specify what properties each constraint class should have. Also establish some inheritance structure.
+    For instance, constraint objects should probably have a feasible(self, x) method so that they can be plotted
+'''
+
 # class RectangleConstraint
 # ranges is a list in the form
 # [(l1, u1), (l2,u2), ...]
