@@ -1,6 +1,5 @@
 import torch
 
-
 '''
     Check the vectorization operations in calling objectives. Should be able to
     easily generate contour maps
@@ -10,10 +9,8 @@ class Objective:
     def __init__(self):
         pass
 
-    #
     def global_objective(self, x):
         self.__call__(x)
-
 
 # Quadratic objective (x-x_0)^T P (x-x_0)
 # if passing multiple vectors, make sure the rows are the decision variables
@@ -45,6 +42,8 @@ class MultiAgentObjective:
     
     # note!!! can modify torch computation graphs
     def __call__(self, x):
+        assert x.shape[0] == len(self.objectives), f'please input the right number of vectors: input: {x.shape[0]} n_agents: {len(self.objectives)}'
+        
         losses = torch.zeros(x.shape[0])
         for i in range(x.shape[0]):
             losses[i] = self.objectives[i](x[i])
@@ -58,7 +57,7 @@ class MultiAgentObjective:
         return loss/len(self.objectives)    
 
 
-    def optimum(self, constraints = None, eta=0.05, max_num_iterations=1000, epsilon = 1e-3):
+    def optimum(self, constraints = None, eta=0.02, max_num_iterations=10000, epsilon = 1e-8):
         x_star = torch.zeros_like(self.objectives[0].x_0, dtype=torch.float64, requires_grad = True)
         prev_iteration = None
         for iteration in range(max_num_iterations):
