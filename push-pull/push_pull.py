@@ -78,22 +78,53 @@ class Helpers:
         Could also easily implement robust push pull
     '''
 
-
-def simulate_push_pull(R, C, obj, x_init = None, cnstr = None, eta = 0.01, num_iterations = 20):
-    phi, pi = Helpers.find_eigenvectors(R, C)
-    dimension = obj.objectives[0].x_0.shape[0] 
-    
-    if x_init == None:
-        x_init = torch.zeros(R.shape[0], dimension)
-    x = x_init
-    
+#
+# initializes the y variable and the previous gradient
+# returns x, y, prev_grad
+#
+def push_pull_init(x : torch.Tensor, obj : objective.Objective):
     loss = obj(x)
     objective.multi_backward(loss)
     y = x.grad.detach().clone()
     prev_grad = y.clone()
     x.grad.zero_()
-    
+    return x, y, prev_grad
+
+# def push_pull_step
+# if cnstr != None, runs projected push pull
+#
+#  returns x, y, new_grad
+#
+#
+def push_pull_step(R, C, obj, x, y, prev_grad, cnstr=None, eta=0.01):
+    # update x
+    with torch.no_grad():
+        x = R @ x - eta * y
+        # if it is a constrained problem, run projected push pull
+        if cnstr != None:
+            x = cnstr.project(x)
+        
+    # evaluate the new gradient to update y
+    x.requires_grad = True 
+    loss = obj(x)
+    objective.multi_backward(loss)
+    new_grad = x.grad.detach().clone()
+    x.grad.zero_()
+
+    # update y
+    y = C @ y + new_grad - prev_grad
+
+    return x, y, new_grad
+
+def simulate_push_pull(R, C, obj, x_init = None, cnstr = None, eta = 0.01, num_iterations = 20):
+    phi, pi = Helpers.find_eigenvectors(R, C)
+    dimension = obj.objectives[0].x_0.shape[0] 
     x_star = obj.optimum(cnstr)
+
+    if x_init == None:
+        x_init = torch.zeros(R.shape[0], dimension)
+    
+    x, y, prev_grad = push_pull_init(x_init, obj)
     
     consensus_errors = []
     gradient_errors = []
@@ -109,21 +140,11 @@ def simulate_push_pull(R, C, obj, x_init = None, cnstr = None, eta = 0.01, num_i
         ys.append(y.detach().clone())
         xs.append(x.detach().clone())
 
-        with torch.no_grad():
-            x = R @ x - eta * y
-            if cnstr != None:
-                x = cnstr.project(x)
+        ## do any intermediate step to modify R, C etc here
 
-        # update the new gradient
-        x.requires_grad = True
-        loss = obj(x)
-        objective.multi_backward(loss)
-        new_grad = x.grad.detach().clone() 
-        x.grad.zero_()
+        ##
 
-        # update y
-        y = (C @ y) + new_grad - prev_grad
-        prev_grad = new_grad
+        x, y, prev_grad = push_pull_step(R, C, obj, x, y, prev_grad=prev_grad, cnstr=cnstr)
     
     data = {}
     data['consensus_error'] = torch.Tensor(consensus_errors)

@@ -10,16 +10,16 @@ import torch
 	4) plot gradients/gradient tracking variables
 '''
 
-def plot_problem_2d(objective, constraints=None, rng=[[0, 7], [0, 5]], cell_size = 0.1):
+def plot_problem_2d(objective, constraints=None, rng=[[0, 7], [0, 5]], cell_size = 0.1, margin_size=1.0):
     with torch.no_grad():
         dims = objective.dims
         assert dims == 2, 'plot_problem_2d is only intended for 2d visualizations'
         x_low, x_high = rng[0]
         y_low, y_high = rng[1]
-        x_low -= 1
-        x_high += 1
-        y_low -=1 
-        y_high +=1 
+        x_low -= margin_size
+        x_high += margin_size
+        y_low -= margin_size
+        y_high += margin_size
         assert x_high > x_low and y_high > y_low, 'please enter a proper range for plotting'
 
         # construct the grid
