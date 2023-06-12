@@ -1,13 +1,18 @@
 import torch
+from abc import ABC, abstractmethod
 
 '''
     Check the vectorization operations in calling objectives. Should be able to
     easily generate contour maps
 '''
 
-class Objective:
+class Objective(ABC):
     def __init__(self):
         pass
+
+    @abstractmethod
+    def __call__(self, x):
+        raise NotImplementedError
 
     def global_objective(self, x):
         self.__call__(x)
